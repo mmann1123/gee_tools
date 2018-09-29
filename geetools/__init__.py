@@ -15,8 +15,7 @@ __license__ = "MIT"
 __copyright__ = "2017 Rodrigo E. Principe"
 
 from . import tools, bitreader, cloud_mask, expressions, decision_tree,\
-              filters, indices
+              filters, indices, algorithms, satellite
 
 from .ui.ipymap import Map
 from .ui import eprint
-from .tools import algorithms

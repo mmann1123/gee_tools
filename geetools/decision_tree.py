@@ -5,7 +5,13 @@ from . import tools
 import ee
 
 def binary(conditions, classes, mask_name='dt_mask'):
+    """
 
+    :param conditions:
+    :param classes:
+    :param mask_name:
+    :return:
+    """
     cond = ee.Dictionary(conditions)
     paths = ee.Dictionary(classes)
 

@@ -305,62 +305,6 @@ def sentinel2(options=('cloud', 'cirrus'), update_mask=True,
                         add_every_mask=add_every_mask)
 
 
-def compute(image, mask_band, bits, options=None, name_all='all_masks'):
-    """ Compute bits using a specified band, a bit's relation and a list of
-    options
-
-    :param image: the image that holds the bit mask band
-    :type image: ee.Image
-    :param mask_band: the name of the band that holds the bits mask
-    :type mask_band: str
-    :param bits: relation between name and bit
-    :type bits: dict
-    :param options: list of 'bits' to compute. Example: ['cloud', 'snow']. If
-        None, will use all keys of the relation's dict
-    :type options: list
-    :param name_all: name for the band that holds the final mask. Default:
-        'all_masks'
-    :type name_all: str
-    :return: The computed mask
-    :rtype: ee.Image
-    """
-    # cast params in case they are not EE objects
-    bits_dict = ee.Dictionary(bits)
-    opt = ee.List(options) if options else bits_dict.keys()
-    image = ee.Image(image).select(mask_band)
-
-    first = ee.Image.constant(0).select([0], [name_all]) # init image
-
-    # function for iterate over the options
-    def for_iterate(option, ini):
-        i = ee.Image(ini) # cast ini
-        all = i.select([name_all])
-
-        # bits relation dict contains the option?
-        cond = bits_dict.contains(option)
-
-        def for_true():
-            """ function to execute if condition == True """
-            # get the mask for the option
-            mask = tools.image.compute_bits(image, bits_dict.get(option),
-                                            bits_dict.get(option),
-                                            option)
-
-            # name the mask
-            # mask = ee.Image(mask).select([0], [option])
-            newmask = all.Or(mask)
-
-            # return ee.Image(all.Or(mask)).addBands(mask)
-            return tools.image.replace(i, name_all, newmask).addBands(mask)
-
-        return ee.Image(ee.Algorithms.If(cond, for_true(), i))
-
-    good_pix = ee.Image(opt.iterate(for_iterate, first))
-
-    # return good_pix.Not()
-    return good_pix
-
-
 def hollstein_S2(options=('cloud', 'snow', 'shadow', 'water', 'cirrus'),
                  name='hollstein', addBands=False, updateMask=True):
     """ Compute Hollstein Decision tree for detecting clouds, clouds shadow,
@@ -378,7 +322,7 @@ def hollstein_S2(options=('cloud', 'snow', 'shadow', 'water', 'cirrus'),
     :return: a function for applying the mask
     :rtype: function
     """
-
+    from . import decision_tree
     def difference(a, b):
         def wrap(img):
             return img.select(a).subtract(img.select(b))
@@ -452,6 +396,65 @@ def hollstein_S2(options=('cloud', 'snow', 'shadow', 'water', 'cirrus'),
     return compute_dt
 
 
+### DEPRECATED FUNCTIONS ###
+# GENERIC APPLICATION OF MASKS
+
+def compute(image, mask_band, bits, options=None, name_all='all_masks'):
+    """ Compute bits using a specified band, a bit's relation and a list of
+    options
+
+    :param image: the image that holds the bit mask band
+    :type image: ee.Image
+    :param mask_band: the name of the band that holds the bits mask
+    :type mask_band: str
+    :param bits: relation between name and bit
+    :type bits: dict
+    :param options: list of 'bits' to compute. Example: ['cloud', 'snow']. If
+        None, will use all keys of the relation's dict
+    :type options: list
+    :param name_all: name for the band that holds the final mask. Default:
+        'all_masks'
+    :type name_all: str
+    :return: The computed mask
+    :rtype: ee.Image
+    """
+    # cast params in case they are not EE objects
+    bits_dict = ee.Dictionary(bits)
+    opt = ee.List(options) if options else bits_dict.keys()
+    image = ee.Image(image).select(mask_band)
+
+    first = ee.Image.constant(0).select([0], [name_all]) # init image
+
+    # function for iterate over the options
+    def for_iterate(option, ini):
+        i = ee.Image(ini) # cast ini
+        all = i.select([name_all])
+
+        # bits relation dict contains the option?
+        cond = bits_dict.contains(option)
+
+        def for_true():
+            """ function to execute if condition == True """
+            # get the mask for the option
+            mask = tools.image.compute_bits(image, bits_dict.get(option),
+                                            bits_dict.get(option),
+                                            option)
+
+            # name the mask
+            # mask = ee.Image(mask).select([0], [option])
+            newmask = all.Or(mask)
+
+            # return ee.Image(all.Or(mask)).addBands(mask)
+            return tools.image.replace(i, name_all, newmask).addBands(mask)
+
+        return ee.Image(ee.Algorithms.If(cond, for_true(), i))
+
+    good_pix = ee.Image(opt.iterate(for_iterate, first))
+
+    # return good_pix.Not()
+    return good_pix
+
+
 def dark_pixels(green, swir2, threshold=0.25):
     """ Detect dark pixels from green and swir2 band
 
@@ -467,9 +470,6 @@ def dark_pixels(green, swir2, threshold=0.25):
         return img.normalizedDifference([green, swir2]).gt(threshold)
     return wrap
 
-
-### DEPRECATED FUNCTIONS ###
-# GENERIC APPLICATION OF MASKS
 
 # LEDAPS
 def ledaps(image):
@@ -538,4 +538,3 @@ def landsatSR(options=('cloud', 'shadow', 'adjacent', 'snow'), name='sr_mask',
             return image
 
     return wrap
-

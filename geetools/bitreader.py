@@ -1,7 +1,6 @@
 # coding=utf-8
 """ Bit Reader module """
 import ee
-import ee.data
 
 if not ee.data._initialized:
     ee.Initialize()
@@ -9,7 +8,7 @@ if not ee.data._initialized:
 from . import tools
 
 class BitReader(object):
-    ''' Bit Reader.
+    """ Bit Reader.
 
     Initializes with parameter `options`, which must be a dictionary with
     the following format:
@@ -44,7 +43,8 @@ class BitReader(object):
         ```
         >>False
 
-    '''
+    """
+
 
     @staticmethod
     def get_bin(bit, nbits=None, shift=0):
@@ -166,8 +166,8 @@ class BitReader(object):
             name = mask.bandNames().get(0)
 
         image = tools.image.empty(encoded, [name])
+        # image = ee.Image.constant(encoded).rename(name)
         return image.updateMask(mask)
-
 
     def encode_and(self, *args):
         """ decodes a comination of the given categories. returns a list of
