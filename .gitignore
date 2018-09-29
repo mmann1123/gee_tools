@@ -83,4 +83,4 @@ venv.bak/
 files/
 
 # notebook checkpoints
-notebooks/.ipynb_checkpoints
+notebooks/.ipynb_checkpoints/
