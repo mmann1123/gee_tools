@@ -2,7 +2,7 @@
 
 import os
 from setuptools import setup, find_packages
-from geetools import __version__
+import re
 
 
 # Utility function to read the README file.
@@ -12,10 +12,16 @@ from geetools import __version__
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
+# Get version without importing, which avoids dependency issues
+def get_version():
+    with open('geetools/_version.py') as version_file:
+        return re.search(r"""__version__\s+=\s+(['"])(?P<version>.+?)\1""",
+                         version_file.read()).group('version')
+
 # the setup
 setup(
     name='geetools',
-    version=__version__,
+    version= get_version(),
     description='Set of tools to use in Google Earth Engine Python API',
     long_description=read('README.rst'),
     url='',
